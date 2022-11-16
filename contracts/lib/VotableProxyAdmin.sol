@@ -59,7 +59,7 @@ contract VotableProxyAdmin {
             proposal.approvals = proposal.approvals + 1;
         }
 
-        if (proposal.approvals == defaultThreshold) {
+        if (proposal.approvals == threshold) {
             (bool status, bytes memory ret) = _target.call(_funcAndArgs);
             if (!status) {
                 revert ProposalFailed(ret);
