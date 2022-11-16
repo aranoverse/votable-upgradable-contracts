@@ -33,7 +33,7 @@ contract VotableProxyAdmin {
         proposals[proposalType_].threshold = _threshold;
     }
 
-    function proposalType(address _target, bytes calldata _funcAndArgs) public pure returns (bytes32){
+    function proposalType(address _target, bytes calldata _funcAndArgs) public pure returns (bytes32) {
         return keccak256(abi.encode(_target, _funcAndArgs));
     }
 
