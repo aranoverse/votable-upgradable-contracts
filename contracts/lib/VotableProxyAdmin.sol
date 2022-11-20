@@ -30,8 +30,9 @@ contract VotableProxyAdmin {
     event ProposalCompleted(bytes32 indexed proposalType, uint256 indexed turn, address target, bytes funcAndArgs);
     event ThresholdUpdated(bytes32 indexed proposalType, uint256 fromThreshold, uint256 toThreshold);
 
-    constructor(uint256 _threshold) {
-        defaultThreshold = _threshold;
+    constructor(uint256 _defaultThreshold, address _proposerRegistry) {
+        defaultThreshold = _defaultThreshold;
+        proposerRegistry = _proposerRegistry;
     }
 
     function setThreshold(address _target, bytes calldata _funcAndArgs, uint256 _threshold) public {
