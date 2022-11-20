@@ -3,7 +3,7 @@
 pragma solidity ^0.8.15;
 
 interface ProposerRegistry {
-    function isProposer(bytes32 calldata proposalType, address proposer) external returns (bool);
+    function isProposer(bytes32 proposalType, address proposer) external returns (bool);
 }
 
 contract VotableProxyAdmin {
@@ -27,6 +27,9 @@ contract VotableProxyAdmin {
     error OnlyByProposal();
     error NotProposer();
 
+    event ProposalCompleted(bytes32 indexed proposalType, uint256 indexed turn, address target, bytes funcAndArgs);
+    event ThresholdUpdated(bytes32 indexed proposalType, uint256 fromThreshold, uint256 toThreshold);
+
     constructor(uint256 _threshold) {
         defaultThreshold = _threshold;
     }
@@ -35,8 +38,9 @@ contract VotableProxyAdmin {
         if (msg.sender != address(this)) {
             revert OnlyByProposal();
         }
-        bytes32 proposalType_ = proposalType(_target, _funcAndArgs);
-        proposals[proposalType_].threshold = _threshold;
+        bytes32 tmpProposalType = proposalType(_target, _funcAndArgs);
+        emit ThresholdUpdated(tmpProposalType, proposals[tmpProposalType].threshold, _threshold);
+        proposals[tmpProposalType].threshold = _threshold;
     }
 
     function proposalType(address _target, bytes calldata _funcAndArgs) public pure returns (bytes32) {
@@ -45,12 +49,12 @@ contract VotableProxyAdmin {
 
     function propose(uint256 _turn, address _target, bytes calldata _funcAndArgs) external {
         address proposer = msg.sender;
-        bytes32 proposalType_ = proposalType(_target, _funcAndArgs);
-        if (!ProposerRegistry(proposerRegistry).isProposer(proposalType, proposer)) {
-            return NotProposer();
+        bytes32 tmpProposalType = proposalType(_target, _funcAndArgs);
+        if (!ProposerRegistry(proposerRegistry).isProposer(tmpProposalType, proposer)) {
+            revert NotProposer();
         }
 
-        Proposal storage proposal = proposals[proposalType_];
+        Proposal storage proposal = proposals[tmpProposalType];
 
         if (_turn != proposal.turn) {
             revert WrongTurn();
@@ -81,6 +85,7 @@ contract VotableProxyAdmin {
             }
 
             proposal.turn = proposal.turn + 1;
+            proposal.approvals = 0;
         }
     }
 }
