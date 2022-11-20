@@ -2,10 +2,15 @@
 
 pragma solidity ^0.8.15;
 
+interface ProposerRegistry {
+    function isProposer(bytes32 calldata proposalType, address proposer) external returns (bool);
+}
+
 contract VotableProxyAdmin {
     uint256 public immutable defaultThreshold;
 
     mapping(bytes32 => Proposal) public proposals;
+    address proposerRegistry;
 
     struct Proposal {
         uint256 threshold;
@@ -20,6 +25,7 @@ contract VotableProxyAdmin {
     error ProposalFailed(bytes msg);
     error NotSupportProposal();
     error OnlyByProposal();
+    error NotProposer();
 
     constructor(uint256 _threshold) {
         defaultThreshold = _threshold;
@@ -38,7 +44,12 @@ contract VotableProxyAdmin {
     }
 
     function propose(uint256 _turn, address _target, bytes calldata _funcAndArgs) external {
+        address proposer = msg.sender;
         bytes32 proposalType_ = proposalType(_target, _funcAndArgs);
+        if (!ProposerRegistry(proposerRegistry).isProposer(proposalType, proposer)) {
+            return NotProposer();
+        }
+
         Proposal storage proposal = proposals[proposalType_];
 
         if (_turn != proposal.turn) {
